@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Nail Studio — Запись</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500&display=swap');
+
+  :root {
+    --rose: #F2C4CE;
+    --rose-deep: #D4849A;
+    --rose-dark: #8B4D5E;
+    --cream: #FBF6F0;
+    --cream-dark: #F0E6DC;
+    --mocha: #3D2B2F;
+    --mocha-mid: #6B4A52;
+    --gold: #C9A96E;
+    --gold-light: #E8D5B0;
+    --white: #FFFFFF;
+    --shadow: rgba(61,43,47,0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Jost', sans-serif;
+    background: var(--cream);
+    color: var(--mocha);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── Header ── */
+  .header {
+    background: var(--mocha);
+    padding: 20px 20px 16px;
+    text-align: center;
+    position: relative;
+  }
+  .header-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 400;
+    color: var(--gold-light);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+  .header-sub {
+    font-size: 11px;
+    color: var(--rose);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 4px;
+    font-weight: 300;
+  }
+
+  /* ── Nav tabs ── */
+  .nav {
+    display: flex;
+    background: var(--mocha);
+    border-top: 1px solid rgba(201,169,110,0.2);
+  }
+  .nav-tab {
+    flex: 1;
+    padding: 12px 8px 10px;
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(232,213,176,0.5);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all .2s;
+    font-weight: 400;
+  }
+  .nav-tab.active {
+    color: var(--gold-light);
+    border-bottom-color: var(--gold);
+  }
+
+  /* ── Pages ── */
+  .page { display: none; padding: 0 0 100px; }
+  .page.active { display: block; }
+
+  /* ── Section heading ── */
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--mocha-mid);
+    padding: 20px 20px 10px;
+    font-weight: 400;
+  }
+
+  /* ── Catalog cards ── */
+  .catalog {
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .service-card {
+    background: var(--white);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px var(--shadow);
+    cursor: pointer;
+    transition: transform .15s, box-shadow .15s;
+    position: relative;
+  }
+  .service-card:active { transform: scale(0.98); }
+  .service-card.selected {
+    box-shadow: 0 0 0 2px var(--gold), 0 4px 16px var(--shadow);
+  }
+
+  .card-image {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    display: block;
+    background: var(--cream-dark);
+    position: relative;
+    overflow: hidden;
+  }
+  .card-img-placeholder {
+    width: 100%;
+    height: 160px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 36px;
+  }
+  .card-body { padding: 14px 16px 16px; }
+  .card-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--mocha);
+    line-height: 1.2;
+  }
+  .card-desc {
+    font-size: 13px;
+    color: var(--mocha-mid);
+    margin-top: 4px;
+    line-height: 1.5;
+    font-weight: 300;
+  }
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+  }
+  .card-price {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--mocha);
+  }
+  .card-duration {
+    font-size: 12px;
+    color: var(--mocha-mid);
+    background: var(--cream);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 300;
+  }
+  .card-check {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    background: var(--gold);
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 14px;
+  }
+  .service-card.selected .card-check { display: flex; }
+
+  /* ── Booking form ── */
+  .booking-form { padding: 0 16px; }
+
+  .selected-service-banner {
+    background: linear-gradient(135deg, var(--mocha), var(--mocha-mid));
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .selected-service-banner.visible { display: block; }
+  .ssb-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--rose); font-weight: 400; }
+  .ssb-name { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--gold-light); margin-top: 4px; }
+  .ssb-price { font-size: 13px; color: var(--rose); margin-top: 2px; font-weight: 300; }
+
+  .field-group { margin-bottom: 14px; }
+  .field-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--mocha-mid);
+    margin-bottom: 6px;
+    font-weight: 400;
+    display: block;
+  }
+
+  .field-input {
+    width: 100%;
+    background: var(--white);
+    border: 1px solid var(--cream-dark);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-family: 'Jost', sans-serif;
+    font-size: 15px;
+    color: var(--mocha);
+    outline: none;
+    transition: border-color .2s;
+    -webkit-appearance: none;
+  }
+  .field-input:focus { border-color: var(--gold); }
+
+  /* Date grid */
+  .date-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+  }
+  .date-cell {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--white);
+    border-radius: 8px;
+    border: 1px solid var(--cream-dark);
+    cursor: pointer;
+    transition: all .15s;
+    font-size: 12px;
+    color: var(--mocha);
+  }
+  .date-cell .dow { font-size: 9px; color: var(--mocha-mid); font-weight: 300; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .date-cell:active { transform: scale(0.95); }
+  .date-cell.selected { background: var(--mocha); color: var(--gold-light); border-color: var(--mocha); }
+  .date-cell.selected .dow { color: var(--rose); }
+  .date-cell.disabled { opacity: 0.3; pointer-events: none; }
+
+  /* Time slots */
+  .time-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .time-slot {
+    padding: 10px 4px;
+    text-align: center;
+    background: var(--white);
+    border-radius: 8px;
+    border: 1px solid var(--cream-dark);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--mocha);
+    transition: all .15s;
+  }
+  .time-slot:active { transform: scale(0.95); }
+  .time-slot.selected { background: var(--mocha); color: var(--gold-light); border-color: var(--mocha); }
+  .time-slot.busy { background: var(--cream-dark); color: var(--mocha-mid); opacity: 0.5; pointer-events: none; text-decoration: line-through; }
+
+  /* ── Submit button ── */
+  .submit-btn {
+    width: 100%;
+    background: var(--mocha);
+    color: var(--gold-light);
+    border: none;
+    border-radius: 14px;
+    padding: 16px;
+    font-family: 'Jost', sans-serif;
+    font-size: 13px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all .2s;
+    margin-top: 20px;
+    font-weight: 400;
+  }
+  .submit-btn:active { transform: scale(0.98); background: var(--mocha-mid); }
+  .submit-btn:disabled { opacity: 0.5; pointer-events: none; }
+
+  /* ── My bookings ── */
+  .bookings-list { padding: 0 16px; display: flex; flex-direction: column; gap: 12px; }
+  .booking-item {
+    background: var(--white);
+    border-radius: 14px;
+    padding: 14px 16px;
+    box-shadow: 0 2px 10px var(--shadow);
+  }
+  .booking-service {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    color: var(--mocha);
+    margin-bottom: 6px;
+  }
+  .booking-meta { font-size: 12px; color: var(--mocha-mid); font-weight: 300; line-height: 1.8; }
+  .booking-status {
+    display: inline-block;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-top: 8px;
+    font-weight: 400;
+  }
+  .status-pending { background: var(--gold-light); color: var(--mocha-mid); }
+  .status-confirmed { background: #D4EDDA; color: #155724; }
+
+  /* ── Empty state ── */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--mocha-mid);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; color: var(--mocha); margin-bottom: 8px; }
+  .empty-sub { font-size: 13px; font-weight: 300; line-height: 1.6; }
+
+  /* ── Success modal ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(61,43,47,0.6);
+    z-index: 100;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-overlay.visible { display: flex; }
+  .modal-sheet {
+    background: var(--cream);
+    border-radius: 24px 24px 0 0;
+    padding: 28px 24px 48px;
+    width: 100%;
+    text-align: center;
+    animation: slideUp .3s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-icon { font-size: 52px; margin-bottom: 16px; }
+  .modal-title { font-family: 'Cormorant Garamond', serif; font-size: 26px; color: var(--mocha); margin-bottom: 10px; }
+  .modal-text { font-size: 14px; color: var(--mocha-mid); font-weight: 300; line-height: 1.6; }
+  .modal-detail { margin-top: 16px; background: var(--white); border-radius: 12px; padding: 14px; text-align: left; font-size: 13px; color: var(--mocha-mid); line-height: 2; }
+  .modal-close {
+    margin-top: 20px;
+    width: 100%;
+    background: var(--mocha);
+    color: var(--gold-light);
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-family: 'Jost', sans-serif;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  /* ── Floating book btn ── */
+  .float-book {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--gold);
+    color: var(--mocha);
+    border: none;
+    border-radius: 30px;
+    padding: 14px 32px;
+    font-family: 'Jost', sans-serif;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 500;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(201,169,110,0.5);
+    display: none;
+    z-index: 50;
+    transition: all .2s;
+    white-space: nowrap;
+  }
+  .float-book:active { transform: translateX(-50%) scale(0.97); }
+  .float-book.visible { display: block; }
+
+  /* Master panel hint */
+  .master-hint {
+    margin: 0 16px 16px;
+    background: var(--mocha);
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .master-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--rose-deep);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    color: var(--cream);
+    flex-shrink: 0;
+  }
+  .master-info { flex: 1; }
+  .master-name { font-size: 14px; color: var(--gold-light); font-weight: 500; }
+  .master-title { font-size: 11px; color: var(--rose); font-weight: 300; margin-top: 2px; }
+  .master-badge { font-size: 11px; background: var(--gold); color: var(--mocha); padding: 3px 8px; border-radius: 20px; font-weight: 500; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">✦ Nail Studio ✦</div>
+  <div class="header-sub">Мастер маникюра · Анастасия</div>
+</div>
+
+<nav class="nav">
+  <div class="nav-tab active" onclick="showPage('catalog')">Каталог</div>
+  <div class="nav-tab" onclick="showPage('booking')">Запись</div>
+  <div class="nav-tab" onclick="showPage('mybookings')">Мои записи</div>
+</nav>
+
+<!-- ══════════ CATALOG PAGE ══════════ -->
+<div id="page-catalog" class="page active">
+  <div class="section-label">Выберите услугу</div>
+
+  <div class="catalog">
+
+    <div class="service-card" onclick="selectService(this, 'Классический маникюр', 1500, '60 мин')">
+      <div class="card-check">✓</div>
+      <div class="card-img-placeholder" style="background: linear-gradient(135deg,#F9E4E8,#F2C4CE);">
+        <!-- Gradient nail art placeholder with emoji -->
+        <div style="font-size:48px;">💅</div>
+        <div style="font-size:11px;color:#8B4D5E;letter-spacing:1px;text-transform:uppercase;font-family:'Jost',sans-serif;font-weight:300;">Классика</div>
+      </div>
+      <div class="card-body">
+        <div class="card-name">Классический маникюр</div>
+        <div class="card-desc">Обработка кутикулы, придание формы, полировка. Идеально для ухода за ногтями.</div>
+        <div class="card-footer">
+          <div class="card-price">1 500 ₽</div>
+          <div class="card-duration">60 мин</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="service-card" onclick="selectService(this, 'Маникюр с покрытием гель-лак', 2500, '90 мин')">
+      <div class="card-check">✓</div>
+      <div class="card-img-placeholder" style="background: linear-gradient(135deg,#E8D5F0,#C9A9DC);">
+        <div style="font-size:48px;">🫧</div>
+        <div style="font-size:11px;color:#5C2D7A;letter-spacing:1px;text-transform:uppercase;font-family:'Jost',sans-serif;font-weight:300;">Гель-лак</div>
+      </div>
+      <div class="card-body">
+        <div class="card-name">Маникюр с гель-лаком</div>
+        <div class="card-desc">Стойкое покрытие до 3 недель. Более 200 оттенков. Без сушки на воздухе.</div>
+        <div class="card-footer">
+          <div class="card-price">2 500 ₽</div>
+          <div class="card-duration">90 мин</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="service-card" onclick="selectService(this, 'Нейл-арт и дизайн', 3500, '120 мин')">
+      <div class="card-check">✓</div>
+      <div class="card-img-placeholder" style="background: linear-gradient(135deg,#D5EAF0,#A9C9DC);">
+        <div style="font-size:48px;">🎨</div>
+        <div style="font-size:11px;color:#1A5C7A;letter-spacing:1px;text-transform:uppercase;font-family:'Jost',sans-serif;font-weight:300;">Нейл-арт</div>
+      </div>
+      <div class="card-body">
+        <div class="card-name">Нейл-арт и дизайн</div>
+        <div class="card-desc">Уникальные рисунки, градиент, фольга, стразы. Создаём образ под ваш стиль.</div>
+        <div class="card-footer">
+          <div class="card-price">от 3 500 ₽</div>
+          <div class="card-duration">120 мин</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="service-card" onclick="selectService(this, 'Наращивание ногтей', 4500, '150 мин')">
+      <div class="card-check">✓</div>
+      <div class="card-img-placeholder" style="background: linear-gradient(135deg,#F0E8D5,#DCCA9A);">
+        <div style="font-size:48px;">✨</div>
+        <div style="font-size:11px;color:#7A5A1A;letter-spacing:1px;text-transform:uppercase;font-family:'Jost',sans-serif;font-weight:300;">Наращивание</div>
+      </div>
+      <div class="card-body">
+        <div class="card-name">Наращивание ногтей</div>
+        <div class="card-desc">Акрил или гель, любая длина и форма. Коррекция раз в 3–4 недели.</div>
+        <div class="card-footer">
+          <div class="card-price">4 500 ₽</div>
+          <div class="card-duration">150 мин</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="service-card" onclick="selectService(this, 'Педикюр SPA', 3000, '90 мин')">
+      <div class="card-check">✓</div>
+      <div class="card-img-placeholder" style="background: linear-gradient(135deg,#D5F0E8,#9ADCCA);">
+        <div style="font-size:48px;">🌸</div>
+        <div style="font-size:11px;color:#1A7A5A;letter-spacing:1px;text-transform:uppercase;font-family:'Jost',sans-serif;font-weight:300;">Педикюр</div>
+      </div>
+      <div class="card-body">
+        <div class="card-name">Педикюр SPA</div>
+        <div class="card-desc">Тёплая ванночка, пилинг, уход за кутикулой, покрытие по желанию.</div>
+        <div class="card-footer">
+          <div class="card-price">3 000 ₽</div>
+          <div class="card-duration">90 мин</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Float book button -->
+<button class="float-book" id="floatBookBtn" onclick="goToBooking()">Записаться →</button>
+
+<!-- ══════════ BOOKING PAGE ══════════ -->
+<div id="page-booking" class="page">
+  <div class="section-label">Оформление записи</div>
+
+  <div class="booking-form">
+
+    <!-- Selected service banner -->
+    <div class="selected-service-banner" id="selectedBanner">
+      <div class="ssb-label">Выбранная услуга</div>
+      <div class="ssb-name" id="bannerName">—</div>
+      <div class="ssb-price" id="bannerPrice">—</div>
+    </div>
+
+    <!-- Service selector fallback -->
+    <div class="field-group" id="serviceSelect" style="display:none;">
+      <label class="field-label">Услуга</label>
+      <select class="field-input" id="serviceDropdown" onchange="onServiceDropdown()">
+        <option value="">— Выберите услугу —</option>
+        <option value="Классический маникюр|1500|60 мин">Классический маникюр — 1 500 ₽</option>
+        <option value="Маникюр с покрытием гель-лак|2500|90 мин">Маникюр с гель-лаком — 2 500 ₽</option>
+        <option value="Нейл-арт и дизайн|3500|120 мин">Нейл-арт и дизайн — от 3 500 ₽</option>
+        <option value="Наращивание ногтей|4500|150 мин">Наращивание ногтей — 4 500 ₽</option>
+        <option value="Педикюр SPA|3000|90 мин">Педикюр SPA — 3 000 ₽</option>
+      </select>
+    </div>
+
+    <!-- Date -->
+    <div class="field-group">
+      <label class="field-label">Выберите дату</label>
+      <div class="date-grid" id="dateGrid"></div>
+    </div>
+
+    <!-- Time -->
+    <div class="field-group">
+      <label class="field-label">Удобное время</label>
+      <div class="time-grid" id="timeGrid"></div>
+    </div>
+
+    <!-- Name -->
+    <div class="field-group">
+      <label class="field-label">Ваше имя</label>
+      <input class="field-input" type="text" id="clientName" placeholder="Например, Мария" />
+    </div>
+
+    <!-- Phone -->
+    <div class="field-group">
+      <label class="field-label">Номер телефона</label>
+      <input class="field-input" type="tel" id="clientPhone" placeholder="+7 (___) ___-__-__" />
+    </div>
+
+    <!-- Comment -->
+    <div class="field-group">
+      <label class="field-label">Пожелания (необязательно)</label>
+      <textarea class="field-input" id="clientComment" rows="3" placeholder="Референс, пожелания по дизайну…" style="resize:none;font-family:'Jost',sans-serif;"></textarea>
+    </div>
+
+    <button class="submit-btn" onclick="submitBooking()">Подтвердить запись</button>
+  </div>
+</div>
+
+<!-- ══════════ MY BOOKINGS PAGE ══════════ -->
+<div id="page-mybookings" class="page">
+  <div class="section-label">История записей</div>
+
+  <div class="master-hint">
+    <div class="master-avatar">А</div>
+    <div class="master-info">
+      <div class="master-name">Анастасия</div>
+      <div class="master-title">Мастер маникюра · Москва</div>
+    </div>
+    <div class="master-badge">⭐ 5.0</div>
+  </div>
+
+  <div class="bookings-list" id="bookingsList">
+    <div class="empty-state">
+      <div class="empty-icon">🌸</div>
+      <div class="empty-title">Записей пока нет</div>
+      <div class="empty-sub">Перейдите в каталог,<br>выберите услугу и запишитесь!</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ SUCCESS MODAL ══════════ -->
+<div class="modal-overlay" id="successModal">
+  <div class="modal-sheet">
+    <div class="modal-icon">✦</div>
+    <div class="modal-title">Запись принята!</div>
+    <div class="modal-text">Мастер получила уведомление и свяжется с вами для подтверждения.</div>
+    <div class="modal-detail" id="modalDetail"></div>
+    <button class="modal-close" onclick="closeModal()">Отлично, спасибо!</button>
+  </div>
+</div>
+
+<script>
+// ── State ──
+let selectedService = null;
+let selectedDate = null;
+let selectedTime = null;
+let bookings = JSON.parse(localStorage.getItem('nail_bookings') || '[]');
+
+// Занятые слоты (имитация)
+const busySlots = { 0: ['10:00','12:00'], 1: ['11:00','15:00'], 2: ['09:00'], 3: [], 4: ['10:00','13:00','16:00'], 5: [], 6: ['11:00'] };
+
+// ── Init Telegram ──
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.ready();
+  tg.expand();
+  document.body.style.backgroundColor = tg.backgroundColor || '#FBF6F0';
+}
+
+// ── Navigation ──
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.nav-tab')[['catalog','booking','mybookings'].indexOf(name)].classList.add('active');
+
+  if (name === 'mybookings') renderBookings();
+  if (name === 'booking') {
+    if (!selectedService) {
+      document.getElementById('serviceSelect').style.display = 'block';
+      document.getElementById('selectedBanner').classList.remove('visible');
+    }
+    buildDateGrid();
+    buildTimeGrid();
+  }
+}
+
+// ── Service selection ──
+function selectService(card, name, price, duration) {
+  document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  selectedService = { name, price, duration };
+
+  document.getElementById('bannerName').textContent = name;
+  document.getElementById('bannerPrice').textContent = price.toLocaleString('ru-RU') + ' ₽ · ' + duration;
+  document.getElementById('selectedBanner').classList.add('visible');
+  document.getElementById('serviceSelect').style.display = 'none';
+
+  document.getElementById('floatBookBtn').classList.add('visible');
+
+  // Haptic
+  if (tg?.HapticFeedback) tg.HapticFeedback.selectionChanged();
+}
+
+function onServiceDropdown() {
+  const val = document.getElementById('serviceDropdown').value;
+  if (!val) return;
+  const [name, price, duration] = val.split('|');
+  selectedService = { name, price: +price, duration };
+  document.getElementById('bannerName').textContent = name;
+  document.getElementById('bannerPrice').textContent = (+price).toLocaleString('ru-RU') + ' ₽ · ' + duration;
+  document.getElementById('selectedBanner').classList.add('visible');
+  document.getElementById('serviceSelect').style.display = 'none';
+}
+
+function goToBooking() {
+  showPage('booking');
+}
+
+// ── Date grid (next 14 days) ──
+const DAYS = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+const MONTHS = ['янв','фев','мар','апр','май','июн','июл','авг','сен','окт','ноя','дек'];
+
+function buildDateGrid() {
+  const grid = document.getElementById('dateGrid');
+  grid.innerHTML = '';
+  const today = new Date();
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    const cell = document.createElement('div');
+    cell.className = 'date-cell' + (i === 0 ? ' disabled' : '');
+    cell.innerHTML = `<span class="dow">${DAYS[d.getDay()]}</span><span>${d.getDate()}</span>`;
+    if (i !== 0) {
+      cell.onclick = () => {
+        document.querySelectorAll('.date-cell').forEach(c => c.classList.remove('selected'));
+        cell.classList.add('selected');
+        selectedDate = d;
+        buildTimeGrid(d.getDay());
+      };
+    }
+    grid.appendChild(cell);
+  }
+}
+
+// ── Time slots ──
+const ALL_TIMES = ['09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00','20:00'];
+
+function buildTimeGrid(dayIndex) {
+  const grid = document.getElementById('timeGrid');
+  grid.innerHTML = '';
+  const busy = busySlots[dayIndex !== undefined ? dayIndex : 99] || [];
+  ALL_TIMES.forEach(t => {
+    const slot = document.createElement('div');
+    slot.className = 'time-slot' + (busy.includes(t) ? ' busy' : '');
+    slot.textContent = t;
+    if (!busy.includes(t)) {
+      slot.onclick = () => {
+        document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+        slot.classList.add('selected');
+        selectedTime = t;
+      };
+    }
+    grid.appendChild(slot);
+  });
+}
+
+// ── Submit ──
+function submitBooking() {
+  const name = document.getElementById('clientName').value.trim();
+  const phone = document.getElementById('clientPhone').value.trim();
+  const comment = document.getElementById('clientComment').value.trim();
+
+  if (!selectedService) { alert('Выберите услугу'); return; }
+  if (!selectedDate) { alert('Выберите дату'); return; }
+  if (!selectedTime) { alert('Выберите время'); return; }
+  if (!name) { alert('Введите ваше имя'); return; }
+  if (!phone) { alert('Введите номер телефона'); return; }
+
+  const booking = {
+    id: Date.now(),
+    service: selectedService.name,
+    price: selectedService.price,
+    duration: selectedService.duration,
+    date: selectedDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }),
+    time: selectedTime,
+    name, phone, comment,
+    status: 'pending',
+    created: new Date().toISOString()
+  };
+
+  bookings.unshift(booking);
+  localStorage.setItem('nail_bookings', JSON.stringify(bookings));
+
+  // Show modal
+  document.getElementById('modalDetail').innerHTML = `
+    <b>${booking.service}</b><br>
+    📅 ${booking.date} в ${booking.time}<br>
+    👤 ${name} · ${phone}
+    ${comment ? '<br>💬 ' + comment : ''}
+  `;
+  document.getElementById('successModal').classList.add('visible');
+
+  // Send to Telegram bot (if available)
+  if (tg) {
+    tg.HapticFeedback?.notificationOccurred('success');
+    tg.sendData(JSON.stringify({
+      type: 'new_booking',
+      service: booking.service,
+      date: booking.date,
+      time: booking.time,
+      client: name,
+      phone, comment
+    }));
+  }
+
+  // Reset form
+  selectedDate = null;
+  selectedTime = null;
+  document.querySelectorAll('.date-cell').forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+  document.getElementById('clientName').value = '';
+  document.getElementById('clientPhone').value = '';
+  document.getElementById('clientComment').value = '';
+}
+
+// ── Close modal ──
+function closeModal() {
+  document.getElementById('successModal').classList.remove('visible');
+  showPage('mybookings');
+}
+
+// ── Render bookings ──
+function renderBookings() {
+  const list = document.getElementById('bookingsList');
+  if (bookings.length === 0) {
+    list.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🌸</div>
+        <div class="empty-title">Записей пока нет</div>
+        <div class="empty-sub">Перейдите в каталог,<br>выберите услугу и запишитесь!</div>
+      </div>`;
+    return;
+  }
+  list.innerHTML = bookings.map(b => `
+    <div class="booking-item">
+      <div class="booking-service">${b.service}</div>
+      <div class="booking-meta">
+        📅 ${b.date} · ${b.time}<br>
+        👤 ${b.name} · ${b.phone}<br>
+        💰 ${b.price?.toLocaleString('ru-RU')} ₽ · ${b.duration}
+        ${b.comment ? '<br>💬 ' + b.comment : ''}
+      </div>
+      <span class="booking-status ${b.status === 'confirmed' ? 'status-confirmed' : 'status-pending'}">
+        ${b.status === 'confirmed' ? '✓ Подтверждено' : '⏳ Ожидает подтверждения'}
+      </span>
+    </div>
+  `).join('');
+}
+
+// ── Init ──
+buildDateGrid();
+buildTimeGrid();
+</script>
+</body>
+</html>
